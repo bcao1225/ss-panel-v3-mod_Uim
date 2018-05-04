@@ -12,6 +12,8 @@ use App\Utils\Radius;
 use App\Utils\QQWry;
 use App\Utils\Wecenter;
 use App\Utils\Tools;
+use Ozdemir\Datatables\Datatables;
+use App\Utils\DatatablesHelper;
 
 class UserController extends AdminController
 {
@@ -224,24 +226,78 @@ class UserController extends AdminController
 
     public function ajax($request, $response, $args)
     {
-        $pageNum = 1;
-        if (isset($request->getQueryParams()["page"])) {
-            $pageNum = $request->getQueryParams()["page"];
-        }
+        $datatables = new Datatables(new DatatablesHelper());
+        $datatables->query('Select id as op,id,user_name,remark,email,money,im_type,im_value,node_group,id as account_expire_in,class,class_expire,passwd,port,method,protocol,obfs,id as online_ip_count,id as last_ss_time,id as used_traffic,id as enable_traffic,id as last_checkin_time,id as today_traffic,id as is_enable,reg_date,id as reg_location,auto_reset_day,auto_reset_bandwidth,ref_by,id as ref_by_user_name from user');
 
-        $users = User::skip(($pageNum - 1) * 100)->limit(100)->get();
-        $total_conut = User::count();
-        if($total_conut < $pageNum * 100) {
-            $res['next'] = 0;
-        } else {
-            $res['next'] = 1;
-        }
+        $datatables->edit('op', function ($data) {
+            return '<a class="btn btn-brand" href="/admin/user/'.$data[id].'/edit">编辑</a>
+                    <a class="btn btn-brand-accent" id="delete" href="javascript:void(0);" onClick="delete_modal_show(\''.$data[id].'\')">删除</a>';
+        });
 
-        $res['data'] = array();
-        foreach ($users as $user) {
-            array_push($res['data'], $user->get_table_json_array());
-        }
+        $datatables->edit('account_expire_in', function ($data) {
+            $user = User::find($data['id']);
+            return $user->expire_in;
+        });
 
-        return $this->echoJson($response, $res);
+        $datatables->edit('online_ip_count', function ($data) {
+            $user = User::find($data['id']);
+            return $user->online_ip_count();
+        });
+
+        $datatables->edit('last_ss_time', function ($data) {
+            $user = User::find($data['id']);
+            return $user->lastSsTime();
+        });
+
+        $datatables->edit('used_traffic', function ($data) {
+            $user = User::find($data['id']);
+            return Tools::flowToGB($user->u + $user->d);
+        });
+
+        $datatables->edit('enable_traffic', function ($data) {
+            $user = User::find($data['id']);
+            return Tools::flowToGB($user->transfer_enable);
+        });
+
+        $datatables->edit('last_checkin_time', function ($data) {
+            $user = User::find($data['id']);
+            return $user->lastCheckInTime();
+        });
+
+        $datatables->edit('today_traffic', function ($data) {
+            $user = User::find($data['id']);
+            return Tools::flowToMB($user->u + $user->d - $user->last_day_t);
+        });
+
+        $datatables->edit('reg_location', function ($data) {
+            $user = User::find($data['id']);
+            return $user->reg_ip;
+        });
+
+        $datatables->edit('account_expire_in', function ($data) {
+            $user = User::find($data['id']);
+            return $user->expire_in;
+        });
+
+        $datatables->edit('ref_by_user_name', function ($data) {
+            $user = User::find($data['id']);
+            $ref_user = User::find($user->ref_by);
+            if ($user->ref_by == 0) {
+                $ref_user_id = 0;
+                $ref_user_name = "系统邀请";
+            } else {
+                if ($ref_user == null) {
+                    $ref_user_id = $user->ref_by;
+                    $ref_user_name = "邀请人已经被删除";
+                } else {
+                    $ref_user_id = $user->ref_by;
+                    $ref_user_name = $ref_user->user_name;
+                }
+            }
+            return $ref_user_name;
+        });
+
+        $body = $response->getBody();
+        $body->write($datatables->generate());
     }
 }
