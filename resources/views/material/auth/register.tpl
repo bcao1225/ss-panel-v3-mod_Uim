@@ -23,6 +23,7 @@
 									</h1>
 									</div>
 								</div>
+								{if $config['register_mode']!='close'}
 								<div class="card-inner">
 
 
@@ -43,27 +44,6 @@
 												</div>
 											</div>
 										</div>
-										{*
-
-
-
-                                  			<!--<div class="form-group form-group-label">
-											<div class="row">
-												<div class="col-md-10 col-md-push-1">
-											<label class="floating-label" for="theme">主题</label>
-											<select id="theme" class="form-control">
-
-													<option value="{$theme}">{$theme}</option>
-
-													</select>
-												</div>
-											</div>
-										</div>-->
-
-
-
-
-                                  *}
 										{if $enable_email_verify == 'true'}
 										<div class="form-group form-group-label">
 											<div class="row">
@@ -71,11 +51,12 @@
 													<label class="floating-label" for="email_code">邮箱验证码</label>
 													<input class="form-control" id="email_code" type="text" onKeypress="javascript:if(event.keyCode == 32)event.returnValue = false;">
 													<button id="email_verify" class="btn btn-block btn-brand-accent waves-attach waves-light">点击获取验证码</button>
+													<a href="" onclick="return false;" data-toggle='modal' data-target='#email_nrcy_modal'>收不到验证码？点击这里</a>
 												</div>
 											</div>
 										</div>
 
-                                  {/if}
+										{/if}
 
 
 										<div class="form-group form-group-label">
@@ -123,19 +104,17 @@
 										</div>
 
 
+										{if $config['register_mode'] == 'invite'}
 											<div class="form-group form-group-label">
 												<div class="row">
 													<div class="col-md-10 col-md-push-1">
-														<label class="floating-label" for="code">邀请码
-														{if $enable_invite_code == 'false'}
-														(可选)
-														{else}
-														(必填)
-														{/if}</label>
+														<label class="floating-label" for="code">邀请码(必填)</label>
 														<input class="form-control" id="code" type="text">
 													</div>
 												</div>
 											</div>
+										{/if}
+
 
 										{if $geetest_html != null}
 											<div class="form-group form-group-label">
@@ -162,16 +141,21 @@
 												</div>
 											</div>
 										</div>
-
+									{else}
+										<div class="form-group">
+											<div class="row">
+												<div class="col-md-10 col-md-push-1">
+													<p>{$config["appName"]} 已停止新用户注册，请联系网站管理员</p>
+												</div>
+											</div>
+										</div>
+									{/if}
+									<div class="clearfix">
+										<p class="margin-no-top pull-left"><a class="btn btn-flat btn-brand waves-attach" href="/auth/login">已经注册？点我登录</a></p>
+									</div>
 								</div>
 							</div>
 						</div>
-						<div class="clearfix">
-							<p class="margin-no-top pull-left"><a class="btn btn-flat btn-brand waves-attach" href="/auth/login">已经注册？请登录</a></p>
-						</div>
-
-
-
 
 						{include file='dialog.tpl'}
 
@@ -194,6 +178,24 @@
 							</div>
 						</div>
 
+						<div aria-hidden="true" class="modal modal-va-middle fade" id="email_nrcy_modal" role="dialog" tabindex="-1">
+							<div class="modal-dialog">
+								<div class="modal-content">
+									<div class="modal-heading">
+										<h2 class="modal-title">收不到验证码？</h2>
+									</div>
+									<div class="modal-inner">
+										{include file='email_nrcy.tpl'}
+									</div>
+									<div class="modal-footer">
+										<p class="text-right">
+										<button class="btn btn-flat btn-brand-accent waves-attach waves-effect" data-dismiss="modal" type="button">我知道了</button>
+                                      </p>
+									</div>
+								</div>
+							</div>
+						</div>
+
 					</section>
 				</div>
 			</div>
@@ -203,11 +205,17 @@
 {include file='footer.tpl'}
 
 
-
+{if $config['register_mode']!='close'}
 <script>
     $(document).ready(function(){
         function register(){
-
+          code = $("#code").val();
+    	{if $config['register_mode'] != 'invite'}
+           code = 0;
+           if ((getCookie('code'))!=''){
+           code = getCookie('code');
+          }
+	    {/if}
 			document.getElementById("tos").disabled = true;
 
             $.ajax({
@@ -221,7 +229,7 @@
                     repasswd: $("#repasswd").val(),
 					wechat: $("#wechat").val(),
 					imtype: $("#imtype").val(),
-					code: $("#code").val(){if $enable_email_verify == 'true'},
+					code:code{if $enable_email_verify == 'true'},
 					emailcode: $("#email_code").val(){/if}{if $geetest_html != null},
 					geetest_challenge: validate.geetest_challenge,
                     geetest_validate: validate.geetest_validate,
@@ -298,7 +306,7 @@
         });
     })
 </script>
-
+{/if}
 
 {if $enable_email_verify == 'true'}
 <script>
@@ -421,9 +429,12 @@ function time(o) {
 		window.location.href='/auth/register'; 
 	}
 
+    {if $config['register_mode'] == 'invite'}
 	{*dumplin:读取cookie，自动填入邀请码框*}
 	if ((getCookie('code'))!=''){
 		$("#code").val(getCookie('code'));
 	}
+	{/if}
+
 
 </script>

@@ -8,6 +8,8 @@ use App\Models\TrafficLog;
 use App\Models\Payback;
 use App\Models\Coupon;
 use App\Models\User;
+use App\Services\Gateway\ChenPay;
+use App\Utils\AliPay;
 use App\Utils\Tools;
 use App\Services\Analytics;
 
@@ -31,6 +33,17 @@ class AdminController extends UserController
         return $this->view()->assign('nodes', $nodes)->display('admin/node.tpl');
     }
 
+
+    public function editConfig($request, $response, $args)
+    {
+        return (new ChenPay())->editConfig();
+    }
+
+    public function saveConfig($request, $response, $args)
+    {
+        return (new ChenPay())->saveConfig($request);
+    }
+
     public function sys()
     {
         return $this->view()->display('admin/index.tpl');
@@ -50,11 +63,17 @@ class AdminController extends UserController
         $table_config['ajax_url'] = 'payback/ajax';
         return $this->view()->assign('table_config', $table_config)->display('admin/invite.tpl');
     }
-
+	
     public function addInvite($request, $response, $args)
     {
-        $n = $request->getParam('num');
+        $num = $request->getParam('num');
         $prefix = $request->getParam('prefix');
+
+		if(Tools::isInt($num)==false){
+		    $res['ret'] = 0;
+            $res['msg'] = "非法请求";
+            return $response->getBody()->write(json_encode($res));
+		}
 
         if ($request->getParam('uid')!="0") {
             if (strpos($request->getParam('uid'), "@")!=false) {
@@ -65,14 +84,14 @@ class AdminController extends UserController
 
             if ($user==null) {
                 $res['ret'] = 0;
-                $res['msg'] = "邀请码添加失败，检查用户id或者用户邮箱是否输入正确";
+                $res['msg'] = "邀请次数添加失败，检查用户id或者用户邮箱是否输入正确";
                 return $response->getBody()->write(json_encode($res));
             }
             $uid = $user->id;
         } else {
             $uid=0;
         }
-		$user->invite_num += $n;
+		$user->invite_num += $num;
 		$user->save();
         $res['ret'] = 1;
         $res['msg'] = "邀请次数添加成功";
@@ -84,7 +103,7 @@ class AdminController extends UserController
     {
         $table_config['total_column'] = array("id" => "ID", "code" => "优惠码",
                           "expire" => "过期时间", "shop" => "限定商品ID",
-                          "credit" => "额度");
+                          "credit" => "额度", "onetime" => "次数");
         $table_config['default_show_column'] = array();
         foreach ($table_config['total_column'] as $column => $value) {
             array_push($table_config['default_show_column'], $column);
@@ -158,7 +177,7 @@ class AdminController extends UserController
     public function ajax_coupon($request, $response, $args)
     {
         $datatables = new Datatables(new DatatablesHelper());
-        $datatables->query('Select id,code,expire,shop,credit from coupon');
+        $datatables->query('Select id,code,expire,shop,credit,onetime from coupon');
 
         $datatables->edit('expire', function ($data) {
             return date('Y-m-d H:i:s', $data['expire']);

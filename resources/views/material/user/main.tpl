@@ -9,10 +9,14 @@
 
 
 	<!-- css -->
-	<link href="https://cdn.jsdelivr.net/gh/sspuic/p@0x01/public/theme/material/css/base.min.css" rel="stylesheet">
-	<link href="https://cdn.jsdelivr.net/gh/sspuic/p@0x01/public/theme/material/css/project.min.css" rel="stylesheet">
-	<link href="https://cdn.jsdelivr.net/gh/sspuic/p@0x01/public/theme/material/css/icon.css" rel="stylesheet">
+	<link href="/theme/material/css/base.min.css" rel="stylesheet">
+	<link href="/theme/material/css/project.min.css" rel="stylesheet">
+	<link href="https://fonts.loli.net/css?family=Roboto:300,300italic,400,400italic,500,500italic" rel="stylesheet">
+	<link href="https://fonts.loli.net/css?family=Material+Icons" rel="stylesheet">
 
+	<!-- jquery -->
+	<script src="/assets/js/jquery.min.js"></script>
+	<script src="/assets/js/qrcode.min.js"></script>
  <style>
     body {
         background: #eee;
@@ -278,7 +282,7 @@
 		}
 
 		.page-orange .ui-content-header {
-			background-image: url(https://cdn.jsdelivr.net/gh/sspuic/p@0x01/public/theme/material/css/images/bg/amber.jpg);
+			background-image: url(/theme/material/css/images/bg/amber.jpg);
 		}
 
 		.content-heading {
@@ -361,16 +365,20 @@
 							</li>
 
 
+							{if $config['enable_ticket']=='true'}
                           <li>
 								<a href="/user/ticket">
 									<i class="icon icon-lg">question_answer</i>&nbsp;工单系统
 								</a>
 							</li>
+
+							{/if}
                                <li>
 								<a href="/user/invite">
 									<i class="icon icon-lg">loyalty</i>&nbsp;邀请链接
 								</a>
 							</li>
+
 
 
 
@@ -463,7 +471,11 @@
 								</a>
 							</li>
 						{/if}
-
+                                          	{if $can_backtoadmin}
+                                         	    <li>
+                                <a class="padding-right-cd waves-attach" href="/user/backtoadmin"><span class="icon icon-lg margin-right">backtoadmin</span>返回管理员身份</a>
+                                                    <li>
+                                                {/if}
 
 
 					</li>
